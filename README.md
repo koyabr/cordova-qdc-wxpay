@@ -32,7 +32,7 @@ var payData = {
 	sign: 签名
 };
 
-cordova.wxpay.payment(payData, cb_success, cb_failure);
+cordova.plugins.wxpay.payment(payData, cb_success, cb_failure);
 // cb_success:调用成功回调方法
 // cb_failure:调用失败回调方法
 

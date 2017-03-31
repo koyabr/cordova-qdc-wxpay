@@ -1,9 +1,15 @@
 package com.qdc.plugins.weixin;
 
+import java.util.Map;
+import java.util.HashMap;
+import java.io.IOException;
+
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 import android.content.Intent;
 import android.content.Context;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -12,6 +18,7 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParserException;
 
 import com.tencent.mm.opensdk.modelpay.PayReq;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
@@ -35,12 +42,37 @@ public class WeixinPay extends CordovaPlugin {
 	/** LOG TAG */
 	private static final String LOG_TAG = WeixinPay.class.getSimpleName();
 
-	@Override
-	public void pluginInitialize(){
-		super.pluginInitialize();
+	private void initWxApp(){
+		if(wxAPI == null){
+			Context context = cordova.getActivity().getApplicationContext();
+			int resId = context.getResources().getIdentifier("config", "xml", context.getPackageName());
+			XmlResourceParser xrp = context.getResources().getXml(resId);
 
-		wxAppId = cordova.getActivity().getIntent().getStringExtra("wxAppId");
-		wxAPI = WXAPIFactory.createWXAPI(cordova.getActivity(), wxAppId);
+			try{
+				xrp.next();
+				while(xrp.getEventType() != XmlResourceParser.END_DOCUMENT){
+					if("preference".equals(xrp.getName())){
+						String key = xrp.getAttributeValue(null, "name");
+						if("wxAppId".equals(key)){
+							wxAppId = xrp.getAttributeValue(null, "value");
+							break;
+						}
+					}
+					xrp.next();
+				}
+			} catch(XmlPullParserException ex){
+		
+			} catch(IOException ex){
+			
+			}
+			wxAPI = WXAPIFactory.createWXAPI(cordova.getActivity(), wxAppId);
+		}
+	}
+
+	@Override
+	public void onStart(){
+
+		initWxApp();
 		
 		IntentFilter filter = new IntentFilter();
 		filter.addAction("com.tencent.mm.plugin.openapi.Intent.ACTION_REFRESH_WXAPP");
@@ -56,7 +88,7 @@ public class WeixinPay extends CordovaPlugin {
 	}
 
 	@Override
-	public void onDestroy() {
+	public void onStop() {
 		if (receiver != null) {
 			cordova.getActivity().unregisterReceiver(receiver);
 			receiver = null;
@@ -71,6 +103,7 @@ public class WeixinPay extends CordovaPlugin {
 	public boolean execute(String action, final JSONArray args,
 			CallbackContext callbackContext) throws JSONException {
 		LOG.d(LOG_TAG, "WeixinPay#execute");
+		
 
 		boolean ret = false;
 
@@ -79,9 +112,9 @@ public class WeixinPay extends CordovaPlugin {
 
 			cbContext = callbackContext;
 
-			PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-			pluginResult.setKeepCallback(true);
-			callbackContext.sendPluginResult(pluginResult);
+			// PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+			// pluginResult.setKeepCallback(true);
+			// callbackContext.sendPluginResult(pluginResult);
 
 			// 参数检查
 			if (args.length() != 1) {
@@ -153,6 +186,7 @@ public class WeixinPay extends CordovaPlugin {
 			//////////////////////
 			// 请求微信支付
 			//////////////////////
+			initWxApp();
 			wxAPI.registerApp(wxAppId);
 			
 			if (!wxAPI.isWXAppInstalled()) {
