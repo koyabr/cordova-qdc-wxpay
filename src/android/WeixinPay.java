@@ -1,5 +1,10 @@
 package com.qdc.plugins.weixin;
 
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+import android.content.Intent;
+import android.content.Context;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.LOG;
@@ -8,9 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.tencent.mm.sdk.modelpay.PayReq;
-import com.tencent.mm.sdk.openapi.IWXAPI;
-import com.tencent.mm.sdk.openapi.WXAPIFactory;
+import com.tencent.mm.opensdk.modelpay.PayReq;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
 /**
  * 微信支付插件
@@ -21,12 +26,43 @@ import com.tencent.mm.sdk.openapi.WXAPIFactory;
 public class WeixinPay extends CordovaPlugin {
 
 	/** JS回调接口对象 */
-	public static CallbackContext cbContext = null;
+	public static CallbackContext cbContext;
 	
 	public static IWXAPI wxAPI;
+	public static String wxAppId;
+	public static BroadcastReceiver receiver;
 
 	/** LOG TAG */
 	private static final String LOG_TAG = WeixinPay.class.getSimpleName();
+
+	@Override
+	public void pluginInitialize(){
+		super.pluginInitialize();
+
+		wxAppId = cordova.getActivity().getIntent().getStringExtra("wxAppId");
+		wxAPI = WXAPIFactory.createWXAPI(cordova.getActivity(), wxAppId);
+		
+		IntentFilter filter = new IntentFilter();
+		filter.addAction("com.tencent.mm.plugin.openapi.Intent.ACTION_REFRESH_WXAPP");
+
+		receiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				wxAPI.registerApp(wxAppId);
+			}
+		};
+
+     	cordova.getActivity().registerReceiver(receiver, filter);
+	}
+
+	@Override
+	public void onDestroy() {
+		if (receiver != null) {
+			cordova.getActivity().unregisterReceiver(receiver);
+			receiver = null;
+		}
+		super.onDestroy();
+	}
 
 	/**
 	 * 插件主入口
@@ -59,15 +95,6 @@ public class WeixinPay extends CordovaPlugin {
 
 			JSONObject jsonObj = args.getJSONObject(0);
 
-			final String appid = jsonObj.getString("appid");
-			if (appid == null || "".equals(appid)) {
-				LOG.e(LOG_TAG, "appid is empty", new NullPointerException());
-				ret = false;
-	            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "appid is empty");
-	            result.setKeepCallback(true);
-	            cbContext.sendPluginResult(result);
-				return ret;
-			}
 			final String noncestr = jsonObj.getString("noncestr");
 			if (noncestr == null || "".equals(noncestr)) {
 				LOG.e(LOG_TAG, "noncestr is empty", new NullPointerException());
@@ -126,8 +153,7 @@ public class WeixinPay extends CordovaPlugin {
 			//////////////////////
 			// 请求微信支付
 			//////////////////////
-			wxAPI = WXAPIFactory.createWXAPI(webView.getContext(), appid, true);
-			wxAPI.registerApp(appid);
+			wxAPI.registerApp(wxAppId);
 			
 			if (!wxAPI.isWXAppInstalled()) {
 				LOG.e(LOG_TAG, "Wechat is not installed", new IllegalAccessException());
@@ -144,7 +170,7 @@ public class WeixinPay extends CordovaPlugin {
 				public void run() {
 					PayReq payreq = new PayReq();
 
-					payreq.appId = appid;
+					payreq.appId = wxAppId;
 					payreq.partnerId = partnerid;
 					payreq.prepayId = prepayid;
 					payreq.packageValue = packageValue;

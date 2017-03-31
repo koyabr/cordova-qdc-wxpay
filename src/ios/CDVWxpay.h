@@ -13,9 +13,9 @@
 @interface CDVWxpay:CDVPlugin <WXApiDelegate>
 
 @property (nonatomic, strong) NSString *currentCallbackId;
-@property (nonatomic, strong) NSString *wechatAppId;
+@property (nonatomic, strong) NSString *wxAppId;
 
 - (void)payment:(CDVInvokedUrlCommand *)command;
-- (void)registerApp:(NSString *)wechatAppId;
+- (void)registerApp;
 
 @end

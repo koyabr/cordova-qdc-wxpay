@@ -10,6 +10,21 @@
 
 @implementation CDVWxpay
 
+-(void)pluginInitialize{
+    self.wxAppId = [self.viewController.settings objectForKey:@"wxAppId"];
+}
+
++(void)load {
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+        selector:@selector(didFinishLaunching:) 
+        name:UIApplicationDidFinishLaunchingNotification 
+        object:nil];
+}
+
++(void)didFinishLaunching:(NSNotification*)notification {
+    [self registerApp];
+}
+
 #pragma mark "API"
 
 - (void)payment:(CDVInvokedUrlCommand *)command
@@ -23,7 +38,6 @@
             return ;
         }
         
-        NSString *appid = nil;
         NSString *noncestr = nil;
         NSString *package = nil;
         NSString *partnerid = nil;
@@ -32,12 +46,6 @@
         NSString *sign = nil;
         
         // check the params
-        if (![params objectForKey:@"appid"])
-        {
-            [self failWithCallbackID:command.callbackId withMessage:@"appid参数错误"];
-            return ;
-        }
-        appid = [params objectForKey:@"appid"];
 
         if (![params objectForKey:@"noncestr"])
         {
@@ -82,7 +90,7 @@
         sign = [params objectForKey:@"sign"];
 
         // 向微信注册
-        [WXApi registerApp:appid];
+        [self registerApp];
         
         if (![WXApi isWXAppInstalled]) {
             [self failWithCallbackID:command.callbackId withMessage:@"未安装微信"];
@@ -90,7 +98,6 @@
         }
     
         PayReq *req = [[PayReq alloc] init];
-        req.openID = appid;
         req.partnerId = partnerid;
         req.prepayId = prepayid;
         req.nonceStr = noncestr;
@@ -105,19 +112,18 @@
         // save the callback id
         self.currentCallbackId = command.callbackId;
         
-        CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"调起成功"];
+        //CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"调起成功"];
         
-        [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
+        //[self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
     }];
 }
 
-- (void)registerApp:(NSString *)wechatAppId
+- (void)registerApp
 {
-    self.wechatAppId = wechatAppId;
     
-    [WXApi registerApp:wechatAppId];
+    [WXApi registerApp:self.wxAppId];
     
-    NSLog(@"Register wechat app: %@", wechatAppId);
+    NSLog(@"Register wechat app: %@", self.wxAppId);
 }
 
 #pragma mark "WXApiDelegate"
@@ -202,7 +208,7 @@
 {
     NSURL* url = [notification object];
     
-    if ([url isKindOfClass:[NSURL class]] && [url.scheme isEqualToString:self.wechatAppId])
+    if ([url isKindOfClass:[NSURL class]] && [url.scheme isEqualToString:self.wxAppId])
     {
         [WXApi handleOpenURL:url delegate:self];
     }
