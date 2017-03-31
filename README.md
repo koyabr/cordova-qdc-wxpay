@@ -6,7 +6,7 @@
 ## 安装
 
 ```
-ionic plugin add https://github.com/koyabr/cordova-qdc-wxpay.git
+ionic plugin add https://github.com/koyabr/cordova-qdc-wxpay.git --variable APP_ID={微信APPID}
 ```
 
 ## 卸载
