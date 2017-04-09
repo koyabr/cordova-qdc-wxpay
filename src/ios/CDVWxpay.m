@@ -11,18 +11,13 @@
 @implementation CDVWxpay
 
 -(void)pluginInitialize{
-    self.wxAppId = [self.viewController.settings objectForKey:@"wxAppId"];
-}
-
-+(void)load {
-    [[NSNotificationCenter defaultCenter] addObserver:self 
-        selector:@selector(didFinishLaunching:) 
-        name:UIApplicationDidFinishLaunchingNotification 
-        object:nil];
-}
-
-+(void)didFinishLaunching:(NSNotification*)notification {
-    [self registerApp];
+    CDVViewController *viewController = (CDVViewController *)self.viewController;
+    self.wxAppId = [viewController.settings objectForKey:@"wxAppId"];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                            selector:@selector(registerApp:)
+                                            name:UIApplicationDidFinishLaunchingNotification
+                                            object:nil];
 }
 
 #pragma mark "API"
