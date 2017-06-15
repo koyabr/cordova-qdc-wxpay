@@ -45,16 +45,13 @@
     </config-file>
 
     <source-file src="src/android/WeixinPay.java" target-dir="src/com/qdc/plugins/weixin" />
-    <!--<source-file src="src/android/AppRegister.java" target-dir="src/com/qdc/plugins/weixin" />-->
-    <!--<source-file src="src/android/WXPayEntryActivity.java" target-dir="src/com/qdc/plugins/weixin/wxapi" />-->
-    <!--<source-file src="src/android/Constants.java" target-dir="src/com/qdc/plugins/weixin" />-->
     <source-file src="libs/android/libammsdk.jar" target-dir="libs" />
   </platform>
 
   <!-- ios -->
   <platform name="ios">
     <config-file target="config.xml" parent="/*">
-      <preference name="wxAppId" value="$APP_ID" />
+      <preference name="wxappid" value="$APP_ID" />
       <feature name="WeixinPay">
         <param name="ios-package" value="CDVWxpay"/>
         <param name="onload" value="true" />

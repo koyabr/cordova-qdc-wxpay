@@ -12,12 +12,16 @@
 
 -(void)pluginInitialize{
     CDVViewController *viewController = (CDVViewController *)self.viewController;
-    self.wxAppId = [viewController.settings objectForKey:@"wxAppId"];
+    self.wxAppId = [viewController.settings objectForKey:@"wxappid"];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                            selector:@selector(registerApp:)
+                                            selector:@selector(didFinishLaunching:)
                                             name:UIApplicationDidFinishLaunchingNotification
                                             object:nil];
+}
+
+-(void)didFinishLaunching:(NSNotification*)notification {
+    [self registerApp];
 }
 
 #pragma mark "API"
